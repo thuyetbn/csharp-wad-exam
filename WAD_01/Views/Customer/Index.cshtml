@@ -1,0 +1,157 @@
+﻿
+@model IEnumerable<WAD_01.Models.Customer>
+@{
+    ViewBag.Title = "Home Page";
+}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">Student Infomation</h3>
+    </div>
+    <div class="panel-body">
+        <div><span>Student Code: B8659</span></div>
+        <div><span>Full Name: Ngo Van Thuyet</span></div>
+        <div><span>Exam: 01</span></div>
+        <hr />
+        <h1>Filter customer</h1>
+        <div class="form-inline">
+            <div class="form-group">
+                <label for="exampleInputName2">Type</label>
+                @Html.DropDownList("Type", null, new { @class = "form-control" })
+            </div>
+            <div class="form-group">
+                <label for="exampleInputName2">Name</label>
+                <input type="text" class="form-control" id="name" placeholder="name of customer">
+            </div>
+            <a id="search" class="btn btn-primary">Summit</a>
+        </div>
+        <hr />
+        <div class="bs-example" data-example-id="striped-table">
+            <table class="table table-striped" id="datatables">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Full Name</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>Gender</th>
+                        <th>Type</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tbl_customer"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script>
+       var table =  $('#datatables').DataTable({
+            "paging": true,
+            "searching": false,
+            "ordering": true,
+            "autoWidth": false,
+            "responsive": true,
+            "processing": true,
+            "filter": true,
+            "lengthMenu": [5, 10, 20, 50, 100, 200, 500],
+            "ajax": "/Customer/GetData",
+            "order": [
+                [0, 'asc']
+            ],
+            "columns": [
+                {
+                    data: 'Id',
+                    className: 'align-middle text-center'
+                },
+                {
+                    data: 'FullName',
+                    className: 'align-middle',
+                },
+                {
+                    data: 'Address',
+                    className: 'align-middle',
+                },
+                {
+                    data: 'Phone',
+                    className: 'align-middle',
+                },
+                {
+                    data: 'Gender',
+                    "className": 'align-middle',
+                    render: function (data) {
+                        return data.Gender ? "Male" : "Female"
+                    }
+                },
+                {
+                    data: 'TypeName',
+                    "className": 'align-middle',
+
+                },
+                {
+                    data: { Id: 'Id' },
+                    render: function (data) {
+                        return '<a  data-id="' + data.Id + '" class="btn btn-danger btn-delete" href="javascript:void(0);">Delete</a></div></div>'
+                    }
+                },
+            ]
+       })
+        function deleteCus (id){
+             $.ajax({
+                type: "POST",
+                url: "@Url.Action("Delete", "Customer")",
+                data: { id: id },
+                success: function (res) {
+                    if (res.statusCode === 200) {
+                        swal("Successfully!", "Deleted Successfully!", "success");
+                        $('#datatables').DataTable().ajax.reload();
+                    } else {
+                        swal("Error!", "Deleted Error!", "error");
+                        $('#datatables').DataTable().ajax.reload();
+                    }
+                }
+            }) 
+        }
+        $(function () {
+
+            $(document).on("click", "#search", function () {
+                let type = $("#Type").val();
+                let name = $("#name").val();
+                table.ajax.url("/Customer/GetData?type=" + type+"&name="+name).load();
+            })
+            $(document).on("click", ".btn-delete", function () {
+                let cusId = $(this).data("id");
+                swal("Are you sure delete it?", {
+                    buttons: {
+                        Confirm: true,
+                        cancel: "Cancel"
+                        
+                    },
+                })
+                    .then((value) => {
+                        switch (value) {
+                            case "Confirm":
+                                deleteCus(cusId);
+                                break;
+
+                        }
+                    });
+            })
+
+            $(document).on("change", "#Type", function () {
+                let name = $("#name").val();
+                let type = $("#Type").val();
+                if (name == "" &&type == 0 ) {
+                    table.ajax.url("/Customer/GetData").load();
+                }
+            })
+            $("#name").keyup(function () {
+                let name = $("#name").val();
+                let type = $("#Type").val();
+                if (name == "" && type == 0) {
+                    table.ajax.url("/Customer/GetData?type=" + type + "&name=" + name).load();
+                }
+            })
+        })
+    </script>
+}
